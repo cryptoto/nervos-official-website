@@ -1,0 +1,295 @@
+@use 'sass:math';
+@import 'src/styles/variables.module';
+
+$linkColor: var(--colorSecond);
+
+.container {
+  --paddingH: 120px;
+
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 var(--paddingH);
+  color: #000;
+
+  .header {
+    position: relative;
+    background: #fff;
+  }
+
+  .banner {
+    margin-bottom: 20px;
+    padding: 50px 0 20px;
+    font-weight: 700;
+    font-size: 1.875rem;
+    border-bottom: 0.5px solid #6a7171;
+  }
+
+  .back {
+    position: absolute;
+    top: calc(100% + 20px);
+    left: 0;
+    color: #6a7171;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-bottom: 25px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+
+    b {
+      font-weight: 600;
+    }
+
+    .separator {
+      padding: 0 5px;
+    }
+
+    & > div {
+      display: flex;
+      align-items: center;
+    }
+
+    time {
+      padding-right: 5px;
+    }
+
+    .clock {
+      width: 12px;
+      height: 12px;
+      margin-right: 5px;
+    }
+
+    .avatars {
+      display: flex;
+      flex-direction: row-reverse;
+      margin-right: 10px;
+
+      // TODO: The handling of /images/nervos_avatar.svg here is entirely
+      // for `/images/nervos_avatar.svg` and needs to be improved
+      img[src$='.svg'] {
+        filter: invert(1);
+      }
+
+      .avatar {
+        width: 35px;
+        height: 35px;
+        margin-left: -20px;
+        border-radius: 50%;
+
+        &:last-child {
+          margin-left: 0;
+        }
+
+        /* stylelint-disable-next-line no-descending-specificity */
+        &:not(img) {
+          display: flex;
+          justify-content: center;
+          color: var(--colorPrimaryBg);
+          font-weight: bold;
+          font-size: 24px;
+          line-height: 1.66em;
+          background: var(--colorPrimary);
+        }
+      }
+    }
+  }
+
+  .content {
+    display: flex;
+    margin-top: 120px;
+    padding-left: 100px;
+
+    article {
+      flex: 1;
+      font-size: 0.875;
+      line-height: 1.4rem;
+      letter-spacing: 5%;
+
+      a {
+        color: $linkColor;
+        text-decoration: underline;
+      }
+
+      h1 {
+        font-weight: 700;
+        font-size: 1.5rem;
+      }
+
+      h2 {
+        font-weight: 700;
+        font-size: 1.4rem;
+      }
+
+      h3 {
+        font-weight: 600;
+        font-size: 1.25rem;
+      }
+
+      .title {
+        font-weight: 600;
+        font-size: 1.5rem;
+        line-height: 1.8rem;
+      }
+
+      .excerpt {
+        margin: 10px 0 25px;
+        color: #484d4e;
+        font-weight: 200;
+        font-size: 1.375rem;
+        line-height: 1.65rem;
+      }
+
+      .end {
+        display: block;
+        width: 18px;
+        height: 18px;
+        margin: 65px auto 120px;
+      }
+
+      img {
+        width: 100%;
+        height: auto;
+      }
+    }
+
+    aside {
+      position: sticky;
+      top: calc(120px);
+      width: 440px;
+      height: min-content;
+      padding-bottom: 120px;
+      padding-left: 130px;
+
+      .title {
+        display: flex;
+        margin: 20px 0;
+        font-weight: 400;
+        font-size: 1rem;
+        line-height: 1.35rem;
+        white-space: nowrap;
+      }
+
+      .subtitle {
+        margin-bottom: 10px;
+        font-size: 0.75rem;
+      }
+
+      .recents {
+        margin-bottom: 20px;
+
+        a {
+          display: flex;
+          margin-bottom: 12px;
+          color: $linkColor;
+          font-weight: 600;
+          font-size: 0.75rem;
+          line-height: 0.975rem;
+          text-decoration: underline;
+        }
+      }
+
+      .category {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 30px;
+        user-select: none;
+
+        a {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: min-content;
+          height: 1.5rem;
+          margin: 0 10px 10px 0;
+          padding: 0 10px;
+          color: inherit;
+          font-size: 0.75rem;
+          white-space: nowrap;
+          text-transform: capitalize;
+          text-decoration: none;
+          border: 1px solid #000;
+          border-radius: 3px;
+        }
+      }
+
+      .media {
+        display: flex;
+        justify-content: space-between;
+        width: 140px;
+      }
+    }
+  }
+  @media screen and (max-width: 1080px) {
+    --paddingH: 26px;
+
+    .back {
+      display: none;
+    }
+
+    .content {
+      flex-direction: column;
+      margin-top: 20px;
+      padding-left: 0;
+
+      article {
+        margin-bottom: 70px;
+        border-bottom: 1px solid #6a7171;
+      }
+
+      aside {
+        width: 100%;
+        padding-bottom: 85px;
+        padding-left: 0;
+      }
+    }
+  }
+}
+
+.tocHeader {
+  font-size: 16px;
+  line-height: 135%;
+}
+
+.tocItem {
+  --paddingTop: 10px;
+
+  $lineHeight: 135%;
+  $fontSize: 12px;
+
+  position: relative;
+  padding: var(--paddingTop) 0 10px 25px;
+  font-weight: 400;
+  font-size: $fontSize;
+  line-height: $lineHeight;
+  border-left: 0.7px solid;
+
+  &:first-child {
+    --paddingTop: 2px;
+  }
+
+  &::after {
+    position: absolute;
+    top: calc(var(--paddingTop) + $fontSize * math.div($lineHeight, 200%));
+    left: 0;
+    width: 5px;
+    height: 5px;
+    background-color: var(--colorPrimary);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    content: '';
+  }
+
+  &.active {
+    color: var(--colorSecond);
+
+    &::after {
+      background-color: var(--colorSecond);
+    }
+  }
+}

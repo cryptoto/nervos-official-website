@@ -1,12 +1,11 @@
 import { ComponentProps, FC, Fragment, useMemo } from 'react'
+import { useTranslation } from 'next-i18next'
 import clsx from 'clsx'
 import { Popover, Portal, Transition } from '@headlessui/react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import { StyledLink } from '../StyledLink'
 import styles from './index.module.scss'
-import ArrowIcon from './arrow.svg'
-import ObliqueArrowIcon from './oblique_arrow.svg'
-import ThinArrowIcon from './thin_arrow.svg'
 import CodeIcon from './code.svg'
 import CommunityIcon from './community.svg'
 import CircleIcon from './circle.svg'
@@ -35,11 +34,11 @@ export const Header: FC<HeaderProps> = props => {
       <LanguagePopover
         languages={[
           { name: 'English', localeName: 'en' },
+          { name: '中文', englishName: 'Chinese', localeName: 'zh', disabled: true },
           // TODO: This is because there is currently no full i18n translation support,
           // so switching to other languages is temporarily disabled.
-          { name: '中文', englishName: 'Chinese', localeName: 'zh', disabled: true },
           { name: '한국어', englishName: 'Korean', localeName: 'ko', disabled: true },
-          null,
+          { name: 'Español', englishName: 'Spanish', localeName: 'es', disabled: true },
         ]}
       />
     </div>
@@ -59,6 +58,7 @@ export function useHeaderHeight(): number {
 }
 
 const MenuPopover: FC = () => {
+  const [t] = useTranslation('common', { keyPrefix: 'navigation' })
   return (
     <Popover className={styles.menuPopover}>
       {({ close }) => (
@@ -81,124 +81,77 @@ const MenuPopover: FC = () => {
             >
               <Popover.Panel className={styles.menuPopoverContent}>
                 <div className={styles.menu}>
-                  <Link href="/developers" className={styles.title}>
+                  <StyledLink href="/developers" className={styles.title}>
                     <CodeIcon />
-                    Developers
-                    <ArrowIcon />
-                  </Link>
+                    {t('developers')}
+                  </StyledLink>
                   <div className={styles.links}>
-                    <Link
-                      href="https://docs.nervos.org/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.link}
-                    >
-                      Docs <ObliqueArrowIcon />
-                    </Link>
-                    <Link
-                      href="https://github.com/nervosnetwork/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.link}
-                    >
-                      Github <ObliqueArrowIcon />
-                    </Link>
-                    <Link
-                      href="https://explorer.nervos.org/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.link}
-                    >
-                      Explorer <ObliqueArrowIcon />
-                    </Link>
+                    <StyledLink href="https://docs.nervos.org/" className={styles.link}>
+                      {t('docs')}
+                    </StyledLink>
+                    <StyledLink href="https://github.com/nervosnetwork/" className={styles.link}>
+                      {t('github')}
+                    </StyledLink>
+                    <StyledLink href="https://explorer.nervos.org/" className={styles.link}>
+                      {t('explorer')}
+                    </StyledLink>
                   </div>
                 </div>
 
                 <div className={styles.menu}>
-                  <Link href="/community" className={styles.title}>
+                  <StyledLink href="/community" className={styles.title}>
                     <CommunityIcon />
-                    Community
-                    <ArrowIcon />
-                  </Link>
+                    {t('community')}
+                  </StyledLink>
                   <div className={styles.links}>
-                    <Link
-                      href="https://dao.ckb.community/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.link}
-                    >
+                    <StyledLink href="https://dao.ckb.community/" className={styles.link}>
                       <div>
-                        Community
-                        <br />
-                        Fund DAO
+                        {t('community_fund_dao')
+                          .split('\n')
+                          .map(p => (
+                            <div key={p}>{p}</div>
+                          ))}
                       </div>
-                      <ObliqueArrowIcon />
-                    </Link>
-                    <Link
-                      href="https://talk.nervos.org/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.link}
-                    >
-                      Forum <ObliqueArrowIcon />
-                    </Link>
-                    <Link
-                      href="https://github.com/nervosnetwork/rfcs"
-                      className={styles.link}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      RFCs <ObliqueArrowIcon />
-                    </Link>
+                    </StyledLink>
+                    <StyledLink href="https://talk.nervos.org/" className={styles.link}>
+                      {t('forum')}
+                    </StyledLink>
+                    <StyledLink href="https://github.com/nervosnetwork/rfcs" className={styles.link}>
+                      {t('rfcs')}
+                    </StyledLink>
                   </div>
                 </div>
 
                 <div className={styles.menu}>
-                  <Link href="/ckbpage" className={styles.title}>
+                  <StyledLink href="/ckbpage" className={styles.title}>
                     <CircleIcon />
                     CKB <span className={styles.ckbHint}>(Token)</span>
-                    <ArrowIcon />
-                  </Link>
+                  </StyledLink>
                   <div className={styles.links}>
-                    <Link href="/mining" className={styles.link}>
-                      Mining <ThinArrowIcon />
-                    </Link>
-                    <Link href="/wallets" className={styles.link}>
-                      Wallets <ThinArrowIcon />
-                    </Link>
+                    <StyledLink href="/mining" className={styles.link}>
+                      {t('mining')}
+                    </StyledLink>
+                    <StyledLink href="/wallets" className={styles.link}>
+                      {t('wallets')}
+                    </StyledLink>
                   </div>
                 </div>
 
                 <div className={styles.menu}>
-                  <Link className={styles.title} href="/learn">
+                  <StyledLink className={styles.title} href="/learn">
                     <LearnIcon />
-                    Learn
-                    <ArrowIcon />
-                  </Link>
+                    {t('learn')}
+                  </StyledLink>
                   <div className={styles.links}>
-                    {/* not ready yet */}
-                    {/* <div className={styles.link}> */}
-                    {/*   Knowledge Base <ThinArrowIcon /> */}
-                    {/* </div> */}
-                    <Link href="/blogs" className={styles.link}>
-                      Blog <ObliqueArrowIcon />
-                    </Link>
-                    <Link
-                      href="https://medium.com/nervosnetwork"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.link}
-                    >
-                      Medium <ObliqueArrowIcon />
-                    </Link>
-                    <Link
-                      href="https://www.youtube.com/c/NervosNetwork"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.link}
-                    >
-                      Youtube <ObliqueArrowIcon />
-                    </Link>
+                    <StyledLink href="/knowledge-base" className={styles.link}>
+                      {t('knowledge_base')}
+                    </StyledLink>
+                    <StyledLink href="https://medium.com/nervosnetwork" className={styles.link}>
+                      {t('medium')}
+                    </StyledLink>
+                    <StyledLink href="https://www.youtube.com/c/NervosNetwork" className={styles.link}>
+                      {t('youtube')}
+                    </StyledLink>
                   </div>
                 </div>
               </Popover.Panel>
@@ -231,34 +184,44 @@ const LanguagePopover: FC<{
 
           {/* Use Portal to prevent being influenced by mix-blend-mode */}
           <Portal>
-            <Popover.Panel className={styles.languagePopoverContent}>
-              {props.languages.map((language, idx) =>
-                language == null ? (
-                  <div key={idx} className={clsx(styles.language, styles.placeholder)} />
-                ) : language.disabled ? (
-                  <div key={language.name} className={clsx(styles.language, styles.disabled)}>
-                    <div>
-                      {language.englishName && <div className={styles.englishName}>{language.englishName}</div>}
-                      <div className={styles.name}>{language.name}</div>
+            <Transition
+              as={Fragment}
+              enter={styles.enter}
+              enterFrom={styles.enterFrom}
+              enterTo={styles.enterTo}
+              leave={styles.leave}
+              leaveFrom={styles.leaveFrom}
+              leaveTo={styles.leaveTo}
+            >
+              <Popover.Panel className={styles.languagePopoverContent}>
+                {props.languages.map((language, idx) =>
+                  language == null ? (
+                    <div key={idx} className={clsx(styles.language, styles.placeholder)} />
+                  ) : language.disabled ? (
+                    <div key={language.name} className={clsx(styles.language, styles.disabled)}>
+                      <div>
+                        {language.englishName && <div className={styles.englishName}>{language.englishName}</div>}
+                        <div className={styles.name}>{language.name}</div>
+                      </div>
+                      <div className={styles.tip}>Coming soon</div>
                     </div>
-                    <div className={styles.tip}>Coming soon</div>
-                  </div>
-                ) : (
-                  <Link
-                    key={language.name}
-                    className={styles.language}
-                    href={{ pathname, query }}
-                    locale={language.localeName}
-                    onClick={() => close()}
-                  >
-                    <div>
-                      {language.englishName && <div className={styles.englishName}>{language.englishName}</div>}
-                      <div className={styles.name}>{language.name}</div>
-                    </div>
-                  </Link>
-                ),
-              )}
-            </Popover.Panel>
+                  ) : (
+                    <Link
+                      key={language.name}
+                      className={styles.language}
+                      href={{ pathname, query }}
+                      locale={language.localeName}
+                      onClick={() => close()}
+                    >
+                      <div>
+                        {language.englishName && <div className={styles.englishName}>{language.englishName}</div>}
+                        <div className={styles.name}>{language.name}</div>
+                      </div>
+                    </Link>
+                  ),
+                )}
+              </Popover.Panel>
+            </Transition>
           </Portal>
         </>
       )}

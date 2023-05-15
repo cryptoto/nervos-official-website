@@ -1,13 +1,13 @@
-import { FC, PropsWithChildren, RefObject, useEffect, useMemo, useRef, useState } from 'react'
+import { FC, Fragment, PropsWithChildren, RefObject, useEffect, useMemo, useRef, useState } from 'react'
 import { GetServerSideProps, type NextPage } from 'next'
 import clsx from 'clsx'
 import { Swiper, SwiperSlide, SwiperSlideProps } from 'swiper/react'
 import { Mousewheel } from 'swiper'
 import { useTranslation } from 'next-i18next'
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations'
-import { Portal } from '@headlessui/react'
+import { Portal, Transition } from '@headlessui/react'
 import Link from 'next/link'
-import { useElementIntersecting, useElementSize, useIsMobile } from '../../hooks'
+import { useElementIntersecting, useElementSize, useIsMobile, useMouse } from '../../hooks'
 import {
   ConwayGameOfLife,
   DISABLE_CGOL_MOUSE_CONTROLLER,
@@ -33,15 +33,27 @@ export const getServerSideProps: GetServerSideProps = async ({ locale }) => {
 }
 
 const Home: NextPage = () => {
+  const { t } = useTranslation('home')
+  const isMobile = useIsMobile()
+
   const ref = useRef<HTMLDivElement>(null)
   const controllerRef = useRef<GameController>(null)
   const initializationIndicatorRef = useRef<HTMLDivElement>(null)
+  const [activeIdx, setActiveIdx] = useState(0)
+  const showScrollDownTip = activeIdx === 0
 
-  const isOnOperableArea = useGameMouseHandler(controllerRef)
+  const mousePos = useMouse()
+
+  const { isOnOperableArea, isDrawing } = useGameMouseHandler(controllerRef)
   const onKeyDown = useGameKeyboardHandler(controllerRef, e => e.target === ref.current)
 
   // Default focus on body, auto-focus this to respond to keyboard events.
   useEffect(() => ref.current?.focus(), [])
+
+  const [hasDrawn, setHasDrawn] = useState(false)
+  useEffect(() => {
+    isDrawing && setHasDrawn(true)
+  }, [isDrawing])
 
   return (
     <Page
@@ -53,19 +65,35 @@ const Home: NextPage = () => {
     >
       {({ renderHeader, renderFooter }) => (
         <>
-          <div className={clsx(styles.blendModeHeader)}>{renderHeader()}</div>
+          {renderHeader({ className: styles.header })}
           <Swiper
             className={styles.swiper}
+            wrapperClass={styles.swiperWrapper}
             direction="vertical"
             slidesPerView="auto"
             autoHeight
             mousewheel={{
               // Supports operations from some Portal to elements outside the swiper container, such as SlideFooter.
               eventsTarget: 'body',
+
+              // Avoid sliding through multiple slides at once when only a small amount of scrolling has taken place.
+              thresholdDelta: 5,
+              sensitivity: 0.5,
             }}
             modules={[Mousewheel]}
             // https://stackoverflow.com/questions/53367064/how-to-enable-select-text-in-swiper-js
             simulateTouch={false}
+            onActiveIndexChange={swiper => setActiveIdx(swiper.activeIndex)}
+            // In chrome, providing a y value with a decimal point to translate3d
+            // causes a 1px gap between the footer and the previous slide,
+            // which appears to be a browser bug, so here's a simple fix.
+            onSetTranslate={swiper => {
+              // The height of the final slide (footer) is adaptive and may appear with a decimal point.
+              const val = swiper.snapGrid[swiper.snapGrid.length - 1]
+              if (val != null) {
+                swiper.snapGrid[swiper.snapGrid.length - 1] = Math.ceil(val)
+              }
+            }}
           >
             <SlideCKBIntro gameControllerRef={controllerRef} />
             <SlideCKBSecurity gameControllerRef={controllerRef} />
@@ -74,13 +102,34 @@ const Home: NextPage = () => {
             <SlideCKBModular gameControllerRef={controllerRef} />
             <SlideGetStarted gameControllerRef={controllerRef} isLastSlide />
 
-            <SwiperSlide className={clsx(styles.footer, presets.themeDark)}>{renderFooter()}</SwiperSlide>
+            <SwiperSlide className={clsx(styles.footer, presets.themeDark)}>
+              {renderFooter({ limitMaxWidth: false })}
+            </SwiperSlide>
           </Swiper>
+
+          <Transition
+            show={showScrollDownTip}
+            as={Fragment}
+            enter={styles.enter}
+            enterFrom={styles.enterFrom}
+            enterTo={styles.enterTo}
+            leave={styles.leave}
+            leaveFrom={styles.leaveFrom}
+            leaveTo={styles.leaveTo}
+          >
+            <div className={styles.scrollTip}>{t('scroll_down')}</div>
+          </Transition>
 
           <div className={styles.golContainer}>
             <ConwayGameOfLife ref={controllerRef} initializationIndicatorRef={initializationIndicatorRef} />
             <div ref={initializationIndicatorRef} className={styles.indicator}></div>
           </div>
+
+          {!isMobile && isOnOperableArea && !hasDrawn && (
+            <div className={styles.rightClickTip} style={{ left: mousePos.clientX, top: mousePos.clientY }}>
+              + {t('right_click_to_draw')}
+            </div>
+          )}
         </>
       )}
     </Page>
@@ -92,11 +141,12 @@ type ScreenSlideProps = PropsWithChildren<
     gameControllerRef: RefObject<GameController>
     isLastSlide?: boolean
     autoHeight?: boolean
+    containerClass?: string
   }
 >
 
 const ScreenSlide: FC<ScreenSlideProps> = props => {
-  const { children, isLastSlide, gameControllerRef, autoHeight, className, ...slideProps } = props
+  const { children, isLastSlide, gameControllerRef, autoHeight, containerClass, className, ...slideProps } = props
 
   const slideFooterContainerRef = useRef<HTMLDivElement>(null)
 
@@ -125,8 +175,7 @@ const ScreenSlide: FC<ScreenSlideProps> = props => {
       className={clsx(styles.screenSlide, { [styles.autoHeight ?? '']: autoHeight }, className)}
       {...slideProps}
     >
-      <div className={styles.container}>
-        <div className={styles.headerMixLayer} />
+      <div className={clsx(styles.container, containerClass)}>
         <div className={styles.content}>{children}</div>
 
         {isLastSlide && (
@@ -160,11 +209,7 @@ const SlideCKBIntro: FC<ScreenSlideProps> = props => {
       <div className={styles.slideCKBIntro}>
         <div className={clsx(styles.titleText, DISABLE_CGOL_MOUSE_CONTROLLER)}>{t('text1')}</div>
         <div className={clsx(styles.subjectTitleText, DISABLE_CGOL_MOUSE_CONTROLLER)}>{t('text2')}</div>
-        <div className={clsx(styles.descriptionText, DISABLE_CGOL_MOUSE_CONTROLLER)}>
-          <span className={styles.bold}>Nervos</span>
-          {t('text3')}
-        </div>
-        <div className={clsx(styles.descriptionText, styles.text4, DISABLE_CGOL_MOUSE_CONTROLLER)}>{t('text4')}</div>
+        <div className={clsx(styles.descriptionText, DISABLE_CGOL_MOUSE_CONTROLLER)}>{t('text3')}</div>
       </div>
     </ScreenSlide>
   )
@@ -190,21 +235,16 @@ const SlideCKBSecurity: FC<ScreenSlideProps> = props => {
 allowCustomDescendantOfSwiper(SlideCKBSecurity)
 
 const SlideCKBFlexibility: FC<ScreenSlideProps> = props => {
+  const { t } = useTranslation('home', { keyPrefix: 'slide_ckb_flexibility' })
   return (
     <ScreenSlide {...props} className={clsx(presets.themeLight, props.className)}>
       <div className={styles.slideCKBFlexibility}>
-        <div className={clsx(styles.titleText, DISABLE_CGOL_MOUSE_CONTROLLER)}>
-          Unbounded Flexibility and Interopera&shy;bility.
-        </div>
-        <ul className={clsx(styles.descriptionText, DISABLE_CGOL_MOUSE_CONTROLLER)}>
-          <li>CKB supports all programming languages and current and future cryptographic primitives.</li>
-          <li>
-            Layer 2 networks built on CKB can deploy different consensus mechanisms, programming languages, execution
-            environments, and data availability storage methods.
-          </li>
-          <li>CKB can speak to and understand the languages of all heterogeneous blockchains.</li>
-          <li>Decentralized applications on CKB can be accessed from all blockchain ecosystems.</li>
-        </ul>
+        {/* html here is for the hyphen */}
+        <div
+          className={clsx(styles.titleText, DISABLE_CGOL_MOUSE_CONTROLLER)}
+          dangerouslySetInnerHTML={{ __html: t('slogan') }}
+        />
+        <div className={clsx(styles.descriptionText, DISABLE_CGOL_MOUSE_CONTROLLER)}>{t('description')}</div>
       </div>
     </ScreenSlide>
   )
@@ -212,16 +252,12 @@ const SlideCKBFlexibility: FC<ScreenSlideProps> = props => {
 allowCustomDescendantOfSwiper(SlideCKBFlexibility)
 
 const SlideCKBSustainability: FC<ScreenSlideProps> = props => {
+  const { t } = useTranslation('home', { keyPrefix: 'slide_ckb_subtainability' })
   return (
     <ScreenSlide {...props} className={clsx(presets.themeDark, props.className)}>
       <div className={styles.slideCKBSustainability}>
-        <div className={clsx(styles.titleText, DISABLE_CGOL_MOUSE_CONTROLLER)}>
-          Guaranteed Long-term Sustaina&shy;bility.
-        </div>
-        <div className={clsx(styles.descriptionText, DISABLE_CGOL_MOUSE_CONTROLLER)}>
-          CKB leverages a novel tokenomic model that aligns the interests of all network stakeholders. It ensures the
-          miners are paid for providing security in perpetuity, while token holders are protected from inflation.
-        </div>
+        <div className={clsx(styles.titleText, DISABLE_CGOL_MOUSE_CONTROLLER)}>{t('slogan')}</div>
+        <div className={clsx(styles.descriptionText, DISABLE_CGOL_MOUSE_CONTROLLER)}>{t('description')}</div>
       </div>
     </ScreenSlide>
   )
@@ -229,15 +265,12 @@ const SlideCKBSustainability: FC<ScreenSlideProps> = props => {
 allowCustomDescendantOfSwiper(SlideCKBSustainability)
 
 const SlideCKBModular: FC<ScreenSlideProps> = props => {
+  const { t } = useTranslation('home', { keyPrefix: 'slide_ckb_modular' })
   return (
     <ScreenSlide {...props} className={clsx(presets.themeLight, props.className)}>
       <div className={styles.slideCKBModular}>
-        <div className={clsx(styles.titleText, DISABLE_CGOL_MOUSE_CONTROLLER)}>Modular Architecture.</div>
-        <div className={clsx(styles.descriptionText, DISABLE_CGOL_MOUSE_CONTROLLER)}>
-          Nervos was designed as a modular blockchain network from the get-go, meaning it can scale to millions of
-          transactions per second through many diverse Layer 2 networks without sacrificing security or
-          decentralization.
-        </div>
+        <div className={clsx(styles.titleText, DISABLE_CGOL_MOUSE_CONTROLLER)}>{t('slogan')}</div>
+        <div className={clsx(styles.descriptionText, DISABLE_CGOL_MOUSE_CONTROLLER)}>{t('description')}</div>
       </div>
     </ScreenSlide>
   )
@@ -245,6 +278,7 @@ const SlideCKBModular: FC<ScreenSlideProps> = props => {
 allowCustomDescendantOfSwiper(SlideCKBModular)
 
 const SlideGetStarted: FC<ScreenSlideProps> = props => {
+  const { t } = useTranslation('home', { keyPrefix: 'get_started' })
   const isMobile = useIsMobile()
 
   if (isMobile) {
@@ -255,7 +289,7 @@ const SlideGetStarted: FC<ScreenSlideProps> = props => {
     return (
       <ScreenSlide autoHeight {...props} className={clsx(presets.themeDark, props.className)}>
         <div className={styles.slideGetStarted}>
-          <div className={clsx(styles.titleText, DISABLE_CGOL_MOUSE_CONTROLLER)}>Get Started.</div>
+          <div className={clsx(styles.titleText, DISABLE_CGOL_MOUSE_CONTROLLER)}>{t('title')}</div>
           <div className={styles.cards}>
             <Swiper
               direction="vertical"
@@ -273,44 +307,42 @@ const SlideGetStarted: FC<ScreenSlideProps> = props => {
             >
               <SwiperSlide>
                 <Card
-                  title="Build on hardware, not software."
+                  title={t('axon.title')}
+                  actions={
+                    <a href="https://axonweb3.io/" className={styles.link} target="_blank" rel="noreferrer">
+                      {t('axon.name')} <ObliqueArrowIcon />
+                    </a>
+                  }
+                >
+                  {t('axon.description')}
+                </Card>
+              </SwiperSlide>
+
+              <SwiperSlide>
+                <Card
+                  title={t('developers.title')}
                   actions={
                     <Link href="/developers" className={styles.link}>
-                      DEVELOPERS <ArrowIcon />
+                      {t('developers.name')} <ArrowIcon />
                     </Link>
                   }
                 >
-                  Leverage CKB’s low-level virtual machine to build without limits.
+                  {t('developers.description')}
                 </Card>
               </SwiperSlide>
 
               <SwiperSlide>
                 <Card
-                  title="Launch your own Layer 2 on CKB with Axon."
+                  title={t('learn_more.title')}
                   actions={
                     // TODO: need external link
                     // https://github.com/Magickbase/nervos-official-website/issues/4
                     <a href="/" className={styles.link} target="_blank" rel="noreferrer">
-                      AXON <ObliqueArrowIcon />
+                      {t('learn_more.name')} <ObliqueArrowIcon />
                     </a>
                   }
                 >
-                  Need high throughput? Pick and choose your flavor of Layer 2 and deploy it on CKB with ease.
-                </Card>
-              </SwiperSlide>
-
-              <SwiperSlide>
-                <Card
-                  title="Build universal decentralized applications."
-                  actions={
-                    // TODO: need external link
-                    // https://github.com/Magickbase/nervos-official-website/issues/4
-                    <a href="/" className={styles.link} target="_blank" rel="noreferrer">
-                      LEARN MORE <ObliqueArrowIcon />
-                    </a>
-                  }
-                >
-                  Build dApps accessible by all wallets, even standard authentication protocols like Apple passkeys.
+                  {t('learn_more.description')}
                 </Card>
               </SwiperSlide>
             </Swiper>
@@ -321,45 +353,48 @@ const SlideGetStarted: FC<ScreenSlideProps> = props => {
   }
 
   return (
-    <ScreenSlide autoHeight {...props} className={clsx(presets.themeDark, props.className)}>
+    <ScreenSlide
+      autoHeight
+      {...props}
+      className={clsx(presets.themeDark, props.className)}
+      containerClass={styles.slideGetStartedWrapper}
+    >
       <div className={styles.slideGetStarted}>
-        <div className={clsx(styles.titleText, DISABLE_CGOL_MOUSE_CONTROLLER)}>Get Started.</div>
+        <div className={clsx(styles.titleText, DISABLE_CGOL_MOUSE_CONTROLLER)}>{t('title')}</div>
         <div className={styles.cards}>
           <Card
-            title="Build on hardware, not software."
+            title={t('axon.title')}
+            actions={
+              <a href="https://axonweb3.io/" className={styles.link} target="_blank" rel="noreferrer">
+                {t('axon.name')} <ObliqueArrowIcon />
+              </a>
+            }
+          >
+            {t('axon.description')}
+          </Card>
+
+          <Card
+            title={t('developers.title')}
             actions={
               <Link href="/developers" className={styles.link}>
-                DEVELOPERS <ArrowIcon />
+                {t('developers.name')} <ArrowIcon />
               </Link>
             }
           >
-            Leverage CKB’s low-level virtual machine to build without limits.
+            {t('developers.description')}
           </Card>
 
           <Card
-            title="Launch your own Layer 2 on CKB with Axon."
+            title={t('learn_more.title')}
             actions={
               // TODO: need external link
               // https://github.com/Magickbase/nervos-official-website/issues/4
               <a href="/" className={styles.link} target="_blank" rel="noreferrer">
-                AXON <ObliqueArrowIcon />
+                {t('learn_more.name')} <ObliqueArrowIcon />
               </a>
             }
           >
-            Need high throughput? Pick and choose your flavor of Layer 2 and deploy it on CKB with ease.
-          </Card>
-
-          <Card
-            title="Build universal decentralized applications."
-            actions={
-              // TODO: need external link
-              // https://github.com/Magickbase/nervos-official-website/issues/4
-              <a href="/" className={styles.link} target="_blank" rel="noreferrer">
-                LEARN MORE <ObliqueArrowIcon />
-              </a>
-            }
-          >
-            Build dApps accessible by all wallets, even standard authentication protocols like Apple passkeys.
+            {t('learn_more.description')}
           </Card>
         </div>
       </div>

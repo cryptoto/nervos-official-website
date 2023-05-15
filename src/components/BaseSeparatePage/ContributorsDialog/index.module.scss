@@ -1,0 +1,165 @@
+@import '../../../styles/presets.module';
+@import '../../../styles/variables.module';
+
+.info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 260px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 20px 0;
+  font-weight: 400;
+
+  .content {
+    flex: 1 1 450px;
+    margin: 0;
+    font-size: 14px;
+    line-height: 160%;
+    letter-spacing: 0.05em;
+  }
+
+  .editorWrap {
+    display: flex;
+    flex: 1 1 min-content;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    line-height: 150%;
+    letter-spacing: 0.03em;
+
+    .avatarAndEditorInfo {
+      display: flex;
+      align-items: center;
+
+      .nameAndTime {
+        display: flex;
+        white-space: nowrap;
+      }
+    }
+
+    .avatar {
+      border-radius: 50%;
+    }
+
+    .lastEdit {
+      margin-left: 14px;
+    }
+
+    .timeString {
+      margin: 0 42px 0 14px;
+    }
+  }
+
+  @media (max-width: $mobileBreakPoint) {
+    flex-direction: column;
+    padding-bottom: 0;
+
+    .content {
+      flex: 1;
+      padding: 60px 24px 20px;
+      font-weight: 400;
+      font-size: 14px;
+      line-height: 160%;
+      letter-spacing: 0.05em;
+    }
+
+    .editorWrap {
+      display: block;
+      width: 100%;
+      padding: 0 24px;
+      font-size: 12px;
+      line-height: 150%;
+      letter-spacing: 0.03em;
+
+      .avatarAndEditorInfo {
+        padding: 20px 0;
+
+        .nameAndTime {
+          display: block;
+        }
+      }
+
+      img {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+      }
+    }
+  }
+}
+
+.infoDialog {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  background: rgb(35 39 40 / 10%);
+  box-shadow: inset 0 0 20px #000;
+  backdrop-filter: blur(7.5px);
+
+  .panel {
+    width: 570px;
+    padding: 42px 40px;
+    color: #000;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 160%;
+    background: #fff;
+    border-radius: 34px;
+
+    .title {
+      display: flex;
+      align-items: center;
+      height: 45px;
+      margin-bottom: 38px;
+      padding: 0 15px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 30px;
+      line-height: 1em;
+      line-height: 45px;
+      background-color: #000;
+    }
+
+    .avatarWrap {
+      display: grid;
+      gap: 10px;
+    }
+
+    .actions {
+      margin-top: 44px;
+
+      .action {
+        padding: 8px 20px;
+        color: #000;
+        font-weight: 500;
+        font-size: 12px;
+        line-height: 105%;
+        letter-spacing: 0.11em;
+        background: transparent;
+        border: 1px solid #000;
+        border-radius: 3px;
+        cursor: pointer;
+
+        &:hover {
+          color: #fff;
+          background: #000;
+        }
+      }
+    }
+
+    .avatarAndLink {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+
+      .avatar {
+        border-radius: 50%;
+      }
+    }
+  }
+}
